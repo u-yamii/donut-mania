@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Donut Mania Prototype v21</title>
+<title>Donut Mania Prototype v23</title>
 <style>
 :root{
   --nav:#2e2838;
@@ -278,28 +278,28 @@ button{font:inherit}
 
 /* ===== utility objects ===== */
 #stock,#trash{
-  position:absolute;width:132px;height:120px;border-radius:22px;background:#ffffffde;
+  position:absolute;width:146px;height:132px;border-radius:24px;background:#ffffffde;
   border:1px solid #fff;display:grid;place-items:center;cursor:pointer;z-index:4;
   box-shadow:var(--shadow);
 }
 #stock{left:57%;top:52%;transform:translate(-50%,-50%)}
 #trash{right:43px;top:34px}
 #stock.selected,#trash.selected{outline:4px solid var(--blue)}
-#stock>img,#trash>img{width:88px;height:88px;object-fit:contain}
+#stock>img,#trash>img{width:102px;height:102px;object-fit:contain}
 #stockItem{position:absolute;inset:12px}
 
 /* ===== player ===== */
 #player{
-  position:absolute;width:132px;height:170px;z-index:10;
+  position:absolute;width:154px;height:196px;z-index:10;
   transform:translate(-50%,-50%);pointer-events:none;
 }
 #playerSprite{
   position:absolute;left:50%;bottom:0;transform:translateX(-50%);
-  height:148px;object-fit:contain;filter:drop-shadow(0 8px 8px #0002);
+  height:172px;object-fit:contain;filter:drop-shadow(0 8px 8px #0002);
 }
 #carry{
-  position:absolute;left:50%;top:-24px;transform:translateX(-50%);
-  width:92px;height:92px;border-radius:50%;border:3px solid #e5bda4;
+  position:absolute;left:50%;top:-26px;transform:translateX(-50%);
+  width:98px;height:98px;border-radius:50%;border:3px solid #e5bda4;
   background:#fff;display:none;align-items:center;justify-content:center;
   box-shadow:0 5px 10px #0002;
 }
@@ -342,6 +342,100 @@ button{font:inherit}
   margin:15px 0;background:#f7eee6;border-radius:18px;padding:11px;
 }
 .panelRule img{width:44px;height:44px;object-fit:contain}
+
+.tutorialPanel{
+  width:min(660px,92vw);
+  padding:25px 28px 27px;
+}
+.tutorialTitle{
+  margin:3px 0 5px;
+  font-size:31px;
+}
+.tutorialLead{
+  margin:0 0 17px;
+  color:#7b6b72;
+  font-size:14px;
+  font-weight:700;
+}
+.tutorialSteps{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:11px;
+  margin:17px 0 22px;
+}
+.tutorialStep{
+  min-width:0;
+  background:linear-gradient(180deg,#fff,#fff8ef);
+  border:2px solid #edd7c7;
+  border-radius:19px;
+  padding:14px 10px 13px;
+  box-shadow:0 6px 14px rgba(91,63,53,.08);
+}
+.tutorialVisual{
+  height:70px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  margin-bottom:8px;
+}
+.tutorialVisual img{
+  width:54px;
+  height:54px;
+  object-fit:contain;
+}
+.tutorialVisual .smallIcon{
+  width:42px;
+  height:42px;
+}
+.tutorialArrow{
+  color:#d79568;
+  font-size:24px;
+  font-weight:1000;
+}
+.tutorialStep strong{
+  display:block;
+  font-size:15px;
+  line-height:1.35;
+  margin-bottom:4px;
+  color:#51434c;
+}
+.tutorialStep span{
+  display:block;
+  font-size:12px;
+  line-height:1.45;
+  color:#7c6d72;
+}
+.tutorialStartHint{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  margin-bottom:13px;
+  color:#8b7777;
+  font-size:12px;
+  font-weight:800;
+}
+.tutorialStartHint img{
+  width:25px;
+  height:25px;
+  object-fit:contain;
+}
+@media(max-width:650px){
+  .tutorialSteps{
+    grid-template-columns:1fr;
+  }
+  .tutorialStep{
+    display:grid;
+    grid-template-columns:80px 1fr;
+    align-items:center;
+    text-align:left;
+  }
+  .tutorialVisual{
+    margin:0;
+    height:64px;
+  }
+}
 .bigBtn{
   border:none;border-radius:14px;padding:13px 27px;
   background:linear-gradient(180deg,#f0a965,#dc8441);color:white;
@@ -456,18 +550,55 @@ button{font:inherit}
     <audio id="bgm" src="sanjinooyatsu.mp3" preload="auto" loop></audio>
 
     <div id="start">
-      <div class="panel">
+      <div class="panel tutorialPanel">
         <img class="panelLogo" src="image/donut/donut_ring_pink.png" alt="">
-        <h1>営業準備完了</h1>
-        <p>お客さんをクリックして注文を聞き、3秒後に表示される注文と同じ商品を作ります。</p>
-        <div class="panelRule">
-          <img src="image/ui/click_hand.png" alt="">
-          <span>→</span>
-          <span>3秒</span>
-          <span>→</span>
-          <img src="image/donut/donut_ring_pink.png" alt="">
+        <h1 class="tutorialTitle">営業準備完了！</h1>
+        <div class="tutorialLead">お客さんを笑顔にしながら、今日のノルマを目指そう</div>
+
+        <div class="tutorialSteps">
+          <div class="tutorialStep">
+            <div class="tutorialVisual">
+              <img class="smallIcon" src="image/ui/click_hand.png" alt="">
+              <span class="tutorialArrow">→</span>
+              <img src="image/donut/donut_ring_pink.png" alt="">
+            </div>
+            <div>
+              <strong>注文と同じドーナツを作ろう</strong>
+              <span>まずお客さんをクリックすると、注文を聞けます。</span>
+            </div>
+          </div>
+
+          <div class="tutorialStep">
+            <div class="tutorialVisual">
+              <img class="smallIcon" src="image/ui/clock.png" alt="">
+              <span class="tutorialArrow">→</span>
+              <img class="smallIcon" src="image/ui/coin.png" alt="">
+            </div>
+            <div>
+              <strong>早く届けるほどお金アップ</strong>
+              <span>待ち時間メーターが多く残っているほど高く売れます。</span>
+            </div>
+          </div>
+
+          <div class="tutorialStep">
+            <div class="tutorialVisual">
+              <img class="smallIcon" src="image/ui/coin.png" alt="">
+              <span class="tutorialArrow">→</span>
+              <img class="smallIcon" src="image/ui/goal_star.png" alt="">
+            </div>
+            <div>
+              <strong>時間内に売上ノルマを達成しよう</strong>
+              <span>画面上の時計と星のゲージを目安に進めましょう。</span>
+            </div>
+          </div>
         </div>
-        <button id="startBtn" class="bigBtn">営業開始</button>
+
+        <div class="tutorialStartHint">
+          <img src="image/ui/click_hand.png" alt="">
+          <span>準備ができたら営業スタート！</span>
+        </div>
+
+        <button id="startBtn" class="bigBtn">営業開始！</button>
       </div>
     </div>
 
