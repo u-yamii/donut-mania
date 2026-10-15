@@ -17,7 +17,7 @@ window.GAME_CONFIG = {
   MACHINE_MS: 4500,          // 機械1工程の加工時間
   PAYMENT_DELAY_MS: 3000,    // 商品を渡してからお金が置かれるまで
   ORDER_DELAY_MS: 2000,      // 注文を聞いてから注文が表示されるまで
-  PLAYER_SPEED: 0.0007,     // 主人公の移動速度
+  PLAYER_SPEED: 0.0006,     // 主人公の移動速度
 
   // ===== Customer patience =====
   CUSTOMER_PATIENCE_MIN_MS: 50000,
