@@ -1,0 +1,1528 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Donut Mania Prototype v21</title>
+<style>
+:root{
+  --nav:#2e2838;
+  --nav2:#44384f;
+  --cream:#fff8ee;
+  --line:#e6c8ad;
+  --pink:#f3afc5;
+  --blue:#72b1f7;
+  --green:#73cc84;
+  --gold:#f2c85c;
+  --red:#eb6868;
+  --shadow:0 12px 28px rgba(72,45,39,.14);
+}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden}
+body{
+  font-family:system-ui,-apple-system,"Yu Gothic",Meiryo,sans-serif;
+  color:#3d3442;background:#ead8bf;user-select:none;
+}
+button{font:inherit}
+#app{height:100vh;display:grid;grid-template-rows:82px 1fr}
+
+/* ===== top HUD: icons/numbers only ===== */
+#topbar{
+  background:linear-gradient(135deg,var(--nav),var(--nav2));
+  color:white;display:flex;align-items:center;justify-content:space-between;
+  gap:14px;padding:9px 17px;box-shadow:0 5px 18px #0003;z-index:50;
+}
+#brand{display:flex;align-items:center;gap:9px}
+#brandLogo{width:55px;height:55px;object-fit:contain;filter:drop-shadow(0 4px 5px #0004)}
+#brandName{font-size:21px;font-weight:1000;letter-spacing:.02em}
+#hud{display:flex;align-items:center;gap:9px;margin-left:auto}
+.hudCard{
+  height:58px;min-width:112px;background:#ffffff10;border:1px solid #ffffff1e;
+  border-radius:15px;padding:7px 10px;display:flex;align-items:center;gap:8px;
+}
+.hudIcon{width:33px;height:33px;object-fit:contain}
+.hudValue{font-size:18px;font-weight:1000;white-space:nowrap}
+.hudBar{
+  width:95px;height:7px;border-radius:999px;background:#1e1926;
+  overflow:hidden;margin-top:5px;
+}
+#timeFill{height:100%;width:0;background:linear-gradient(90deg,#f4b05d,#ee7c9e)}
+#goalFill{height:100%;width:0;background:linear-gradient(90deg,#f5d16e,#f4ad4a)}
+#resetBtn{
+  width:48px;height:48px;border-radius:14px;border:1px solid #ffffff2b;
+  background:#ffffff12;color:white;font-size:27px;font-weight:700;
+  display:grid;place-items:center;cursor:pointer;
+}
+
+#resetBtn:hover{background:#ffffff1d}
+
+#audioControls{
+  height:48px;
+  display:flex;
+  align-items:center;
+  gap:7px;
+  padding:0 10px;
+  border-radius:14px;
+  border:1px solid #ffffff2b;
+  background:#ffffff10;
+}
+#muteBtn{
+  width:30px;height:30px;
+  display:grid;place-items:center;
+  padding:0;border:0;background:transparent;
+  color:white;font-size:18px;cursor:pointer;
+}
+#volumeSlider{
+  width:86px;
+  accent-color:#f1b366;
+  cursor:pointer;
+}
+#volumeSlider:focus{outline:none}
+
+
+/* ===== board ===== */
+#game{
+  position:relative;overflow:hidden;
+  background-image:
+    linear-gradient(rgba(255,248,236,.26),rgba(244,225,197,.30)),
+    url("image/bg/shop_bg.png");
+  background-size:cover,cover;
+  background-position:center center,center center;
+  background-repeat:no-repeat,no-repeat;
+}
+#workArea{position:absolute;left:330px;right:0;top:0;bottom:0}
+#workArea:before{
+  content:"";position:absolute;inset:17px;border-radius:27px;
+  background:linear-gradient(180deg,rgba(255,255,255,.24),rgba(255,247,234,.14));
+  border:1px solid rgba(255,255,255,.72);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.22);
+  backdrop-filter: blur(1px);
+  pointer-events:none;
+}
+
+/* ===== customers: no header/text ===== */
+#customerZone{
+  position:absolute;left:0;top:0;bottom:0;width:330px;z-index:12;
+  background:linear-gradient(180deg,#f9d9e5,#f3c6d4);
+  border-right:5px solid #d69bad;box-shadow:8px 0 24px #8f5f6a20;
+}
+#customers{
+  position:absolute;inset:12px;
+  display:grid;grid-template-rows:repeat(4,minmax(0,1fr));gap:9px;
+}
+.customer,.emptyCard,.pendingCard,.moneyCard{
+  min-height:0;border-radius:18px;background:#fffaf7;
+  border:2px solid #eabac9;box-shadow:0 6px 15px #7f4d5a18;
+  position:relative;overflow:hidden;
+}
+.customer{
+  display:grid;grid-template-columns:76px 1fr;align-items:center;
+  padding:8px 9px 20px 7px;cursor:pointer;transition:.13s;
+}
+.customer:hover,.moneyCard:hover{transform:translateX(3px);box-shadow:0 8px 18px #7f4d5a24}
+.customer.selected,.moneyCard.selected{outline:4px solid var(--blue)}
+.customer.wrongFlash{animation:wrongFlash .42s ease}
+.customer.orderReadyFlash{animation:readyFlash .7s ease}
+.customer.newFlash{animation:newFlash .65s ease}
+@keyframes wrongFlash{
+  0%,100%{background:#fffaf7;transform:translateX(0)}
+  25%{background:#ffd4d4;transform:translateX(-5px)}
+  50%{transform:translateX(5px)}
+  75%{transform:translateX(-3px)}
+}
+@keyframes readyFlash{45%{box-shadow:0 0 0 5px #ffe07a,0 0 26px #ffd45e}}
+@keyframes newFlash{45%{box-shadow:0 0 0 5px #ffffff,0 0 22px #ffbdd4}}
+.customerPortrait{width:69px;height:69px;object-fit:contain;justify-self:center}
+.customerContent{
+  height:100%;display:grid;place-items:center;position:relative;padding-bottom:5px;
+}
+.askBubble,.thinkingBubble,.orderBubble{
+  width:108px;height:91px;border-radius:22px;background:#fff;
+  border:3px solid #e8bda8;box-shadow:inset 0 3px #fff6;
+  display:grid;place-items:center;position:relative;
+}
+.askBubble:before,.thinkingBubble:before,.orderBubble:before{
+  content:"";position:absolute;left:-10px;bottom:19px;width:18px;height:15px;
+  background:#fff;border-left:3px solid #e8bda8;border-bottom:3px solid #e8bda8;
+  transform:rotate(30deg);border-radius:0 0 0 6px;
+}
+.askMark{
+  width:48px;height:48px;border-radius:50%;background:#f4b44f;color:white;
+  display:grid;place-items:center;font-weight:1000;font-size:31px;
+  box-shadow:0 0 0 7px #fff1c7;animation:askPulse .9s infinite alternate;
+}
+@keyframes askPulse{to{transform:scale(1.08);box-shadow:0 0 0 10px #fff1c7}}
+.askHint{
+  position:absolute;right:5px;top:5px;width:25px;height:25px;
+  object-fit:contain;animation:handBob .7s infinite alternate;
+}
+@keyframes handBob{to{transform:translateY(-4px)}}
+.thinkingDots{display:flex;gap:7px}
+.thinkingDots i{
+  width:12px;height:12px;border-radius:50%;background:#df9fbb;animation:blink 1s infinite;
+}
+.thinkingDots i:nth-child(2){animation-delay:.18s}.thinkingDots i:nth-child(3){animation-delay:.36s}
+@keyframes blink{0%,80%,100%{opacity:.2}40%{opacity:1}}
+.orderBubble{width:118px;height:106px;border-radius:20px}
+
+/* Meter is entirely inside the customer card */
+.patienceWrap{
+  position:absolute;left:84px;right:10px;bottom:7px;height:10px;
+  border-radius:999px;background:#ead9d2;border:1px solid #d1afa3;
+  overflow:hidden;z-index:2;
+}
+.patienceFill{
+  height:100%;width:100%;background:#72cb82;
+  transition:width .12s linear,background .2s;
+}
+.emptyCard{display:grid;place-items:center;background:#fff5f7;opacity:.52}
+.emptyCircle{width:64px;height:64px;border-radius:50%;border:3px dashed #d9a6b6}
+.pendingCard{display:grid;grid-template-columns:85px 1fr;align-items:center;padding:9px}
+.pendingCard img{width:62px;height:62px;object-fit:contain;justify-self:center}
+.waitDots{display:flex;gap:7px}
+.waitDots i{width:11px;height:11px;border-radius:50%;background:#dea1b8;animation:blink 1s infinite}
+.waitDots i:nth-child(2){animation-delay:.2s}.waitDots i:nth-child(3){animation-delay:.4s}
+.moneyCard{
+  display:grid;grid-template-columns:88px 1fr;align-items:center;padding:9px;
+  cursor:pointer;background:#fff4c5;border-color:#e5c65d;
+}
+.moneyCard img{width:64px;height:64px;object-fit:contain;justify-self:center;animation:coinBob .75s infinite alternate}
+.moneyCard strong{font-size:27px;color:#6f552a}
+@keyframes coinBob{to{transform:translateY(-4px)}}
+
+/* ===== products ===== */
+.product{width:100%;height:100%;position:relative}
+.productBase{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:76%;height:76%;object-fit:contain;
+}
+.toppingBadge{
+  position:absolute;right:-1px;top:-1px;width:46%;height:46%;object-fit:contain;
+  background:#fff;border:2px solid #e7bfa6;border-radius:50%;padding:3px;
+  box-shadow:0 3px 7px #0002;
+}
+.orderBubble .productBase{width:79%;height:79%}
+.orderBubble .toppingBadge{right:-6px;top:-6px;width:48%;height:48%}
+
+/* ===== station layout: small machine image + permanent independent control dock ===== */
+.station{
+  position:absolute;width:238px;height:282px;z-index:4;
+}
+.station.selected .machineStage,
+.station.selected .controlDock{outline:4px solid #74b6ff}
+.machineStage{
+  height:190px;border-radius:24px;background:linear-gradient(180deg,#ffffffd8,#fff8edd8);
+  border:1px solid #fff;box-shadow:var(--shadow);position:relative;
+  display:grid;place-items:center;padding:11px;
+}
+.machineImage{
+  width:184px;height:158px;object-fit:contain;pointer-events:none;
+  filter:drop-shadow(0 6px 5px #0002);
+}
+.machineLamp{
+  position:absolute;left:15px;bottom:14px;width:10px;height:10px;border-radius:50%;
+  background:#b9b0ab;box-shadow:inset 0 1px 2px #0002;
+}
+.station.processing .machineLamp{background:#f0a258;box-shadow:0 0 8px #f0a258}
+.station.ready .machineLamp{background:#72d18a;box-shadow:0 0 8px #72d18a}
+.machineProgressWrap{
+  position:absolute;left:32px;right:15px;bottom:15px;height:9px;
+  border-radius:999px;background:#ddd5ce;overflow:hidden;
+  box-shadow:inset 0 1px 2px #0002;
+}
+.machineProgressFill{height:100%;width:0;background:linear-gradient(90deg,#f1a05c,#e466a2)}
+.station.ready .machineProgressFill{background:#72cf88}
+
+/* Always-visible control panel, not tied to the machine artwork */
+.controlDock{
+  height:70px;margin-top:10px;border-radius:18px;
+  background:linear-gradient(180deg,#fffdf9,#f3ebe3);
+  border:1px solid #d8cbbf;box-shadow:0 8px 18px #69462f15;
+  display:flex;align-items:center;justify-content:center;padding:8px;
+}
+.machineOptions{display:flex;align-items:center;justify-content:center;gap:8px}
+.optionBtn{
+  width:48px;height:48px;border:1px solid #cfc1b5;border-radius:12px;
+  background:#fffaf5;display:grid;place-items:center;padding:4px;
+  cursor:pointer;box-shadow:0 2px 4px #0001;transition:.1s;
+}
+.optionBtn:hover{background:#fff}
+.optionBtn:disabled{opacity:.34;cursor:not-allowed}
+#colorStation .optionBtn{width:58px}
+
+/* Independent output slot: easy to click, not dependent on exact tray coordinates */
+.outputPad{
+  position:absolute;right:-11px;top:95px;width:78px;height:74px;
+  border-radius:18px;background:#fffaf1;border:2px dashed #d6af8e;
+  display:none;align-items:center;justify-content:center;cursor:pointer;z-index:5;
+}
+.station.ready .outputPad{
+  display:flex;box-shadow:0 0 0 4px #fff8 inset,0 0 22px #ffd55c;
+  animation:readyPulse .75s infinite alternate;
+}
+@keyframes readyPulse{to{filter:brightness(1.1);transform:scale(1.025)}}
+
+#shapeStation{left:31%;top:22px;transform:translateX(-50%)}
+#colorStation{left:31%;bottom:22px;transform:translateX(-50%)}
+#topStation{right:23px;top:50%;transform:translateY(-50%)}
+
+.shapeBtnImg{width:40px;height:40px;object-fit:contain}
+.colorSwatch{
+  width:32px;height:32px;border-radius:50%;border:3px solid #695c56;
+  box-shadow:inset 0 3px #fff8;
+}
+.colorSwatch.brown{background:#80503a}
+.colorSwatch.blue{background:#6dc9ef}
+.colorSwatch.pink{background:#ef95ba}
+.ingredientIcon{width:37px;height:37px;object-fit:contain}
+
+/* ===== utility objects ===== */
+#stock,#trash{
+  position:absolute;width:132px;height:120px;border-radius:22px;background:#ffffffde;
+  border:1px solid #fff;display:grid;place-items:center;cursor:pointer;z-index:4;
+  box-shadow:var(--shadow);
+}
+#stock{left:57%;top:52%;transform:translate(-50%,-50%)}
+#trash{right:43px;top:34px}
+#stock.selected,#trash.selected{outline:4px solid var(--blue)}
+#stock>img,#trash>img{width:88px;height:88px;object-fit:contain}
+#stockItem{position:absolute;inset:12px}
+
+/* ===== player ===== */
+#player{
+  position:absolute;width:132px;height:170px;z-index:10;
+  transform:translate(-50%,-50%);pointer-events:none;
+}
+#playerSprite{
+  position:absolute;left:50%;bottom:0;transform:translateX(-50%);
+  height:148px;object-fit:contain;filter:drop-shadow(0 8px 8px #0002);
+}
+#carry{
+  position:absolute;left:50%;top:-24px;transform:translateX(-50%);
+  width:92px;height:92px;border-radius:50%;border:3px solid #e5bda4;
+  background:#fff;display:none;align-items:center;justify-content:center;
+  box-shadow:0 5px 10px #0002;
+}
+#target{
+  position:absolute;width:34px;height:34px;border-radius:50%;
+  border:4px solid #fff;box-shadow:0 0 0 4px var(--blue);
+  transform:translate(-50%,-50%);display:none;pointer-events:none;z-index:7;
+}
+
+/* no transient text banners during play */
+#denyMark{
+  position:absolute;width:42px;height:42px;border-radius:50%;
+  background:#ef6b6b;color:white;font-size:29px;font-weight:1000;
+  display:none;place-items:center;z-index:60;pointer-events:none;
+  box-shadow:0 5px 14px #0002;
+}
+#denyMark.show{display:grid;animation:deny .45s ease}
+@keyframes deny{
+  0%{transform:scale(.6);opacity:0}
+  35%{transform:scale(1.1);opacity:1}
+  100%{transform:scale(1);opacity:0}
+}
+
+/* ===== overlays ===== */
+#start,#result{
+  position:absolute;inset:0;background:linear-gradient(#251f2db5,#3c2f39ad);
+  z-index:80;display:flex;align-items:center;justify-content:center;
+}
+#result{display:none}
+.panel{
+  width:min(560px,92vw);background:linear-gradient(180deg,#fffdf9,#fff6ec);
+  border:1px solid #fff;border-radius:28px;padding:28px;text-align:center;
+  box-shadow:0 30px 80px #0004;
+}
+.panelLogo{width:78px;height:78px;object-fit:contain}
+.panel h1,.panel h2{margin:4px 0 9px;font-size:31px}
+.panel p{line-height:1.65;color:#6b606b;font-size:14px}
+.panelRule{
+  display:flex;align-items:center;justify-content:center;gap:12px;
+  margin:15px 0;background:#f7eee6;border-radius:18px;padding:11px;
+}
+.panelRule img{width:44px;height:44px;object-fit:contain}
+.bigBtn{
+  border:none;border-radius:14px;padding:13px 27px;
+  background:linear-gradient(180deg,#f0a965,#dc8441);color:white;
+  font-weight:1000;font-size:17px;box-shadow:0 6px 0 #b9652f;cursor:pointer;
+}
+.bigBtn.secondary{
+  background:linear-gradient(#8f8199,#76677f);
+  box-shadow:0 6px 0 #55485c;margin-left:7px;
+}
+.resultMark{font-size:52px;margin-bottom:4px}
+.resultSuccess{color:#3fa65a}
+.resultFail{color:#cf5d5d}
+
+@media(max-width:1180px){
+  #workArea{left:310px}
+  #customerZone{width:310px}
+  .station{width:218px;height:270px}
+  .machineImage{width:168px;height:147px}
+  #shapeStation,#colorStation{left:33%}
+  #topStation{right:6px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="topbar">
+    <div id="brand">
+      <img id="brandLogo" src="image/donut/donut_ring_pink.png" alt="">
+      <div id="brandName">Donut Mania</div>
+    </div>
+
+    <div id="hud">
+      <div class="hudCard">
+        <img class="hudIcon" src="image/ui/clock.png" alt="">
+        <div>
+          <div class="hudValue" id="clock">10:00</div>
+          <div class="hudBar"><div id="timeFill"></div></div>
+        </div>
+      </div>
+
+      <div class="hudCard">
+        <img class="hudIcon" src="image/ui/coin.png" alt="">
+        <div class="hudValue">¥<span id="money">0</span></div>
+      </div>
+
+      <div class="hudCard">
+        <img class="hudIcon" src="image/ui/goal_star.png" alt="">
+        <div>
+          <div class="hudValue">¥<span id="goalCurrent">0</span> / <span id="goalTarget">0</span></div>
+          <div class="hudBar"><div id="goalFill"></div></div>
+        </div>
+      </div>
+
+      <div id="audioControls">
+        <button id="muteBtn" aria-label="BGM mute" title="BGM">🔊</button>
+        <input id="volumeSlider" type="range" min="0" max="100" value="18" aria-label="BGM volume">
+      </div>
+
+      <button id="resetBtn" aria-label="reset">↻</button>
+    </div>
+  </div>
+
+  <div id="game">
+    <div id="customerZone"><div id="customers"></div></div>
+
+    <div id="workArea">
+      <div id="shapeStation" class="station" data-machine="shape1">
+        <div class="machineStage">
+          <img class="machineImage" src="image/machine/machine_fryer_shape_v3.png" alt="">
+          <span class="machineLamp"></span>
+          <div class="machineProgressWrap"><div class="machineProgressFill"></div></div>
+          <div class="outputPad" data-output="shape1"></div>
+        </div>
+        <div class="controlDock"><div class="machineOptions" id="shapeOptions"></div></div>
+      </div>
+
+      <div id="colorStation" class="station" data-machine="color1">
+        <div class="machineStage">
+          <img class="machineImage" src="image/machine/machine_color_v3.png" alt="">
+          <span class="machineLamp"></span>
+          <div class="machineProgressWrap"><div class="machineProgressFill"></div></div>
+          <div class="outputPad" data-output="color1"></div>
+        </div>
+        <div class="controlDock"><div class="machineOptions" id="colorOptions"></div></div>
+      </div>
+
+      <div id="topStation" class="station" data-machine="top1">
+        <div class="machineStage">
+          <img class="machineImage" src="image/machine/machine_topping_v3.png" alt="">
+          <span class="machineLamp"></span>
+          <div class="machineProgressWrap"><div class="machineProgressFill"></div></div>
+          <div class="outputPad" data-output="top1"></div>
+        </div>
+        <div class="controlDock"><div class="machineOptions" id="topOptions"></div></div>
+      </div>
+
+      <div id="stock">
+        <img src="image/ui/stock_tray.png" alt="">
+        <div id="stockItem"></div>
+      </div>
+      <div id="trash"><img src="image/ui/trash_bin.png" alt=""></div>
+    </div>
+
+    <div id="player">
+      <div id="carry"></div>
+      <img id="playerSprite" src="image/player/player_idle.png" alt="">
+    </div>
+
+    <div id="target"></div>
+    <div id="denyMark">×</div>
+
+    <audio id="bgm" src="sanjinooyatsu.mp3" preload="auto" loop></audio>
+
+    <div id="start">
+      <div class="panel">
+        <img class="panelLogo" src="image/donut/donut_ring_pink.png" alt="">
+        <h1>営業準備完了</h1>
+        <p>お客さんをクリックして注文を聞き、3秒後に表示される注文と同じ商品を作ります。</p>
+        <div class="panelRule">
+          <img src="image/ui/click_hand.png" alt="">
+          <span>→</span>
+          <span>3秒</span>
+          <span>→</span>
+          <img src="image/donut/donut_ring_pink.png" alt="">
+        </div>
+        <button id="startBtn" class="bigBtn">営業開始</button>
+      </div>
+    </div>
+
+    <div id="result"><div class="panel" id="resultPanel"></div></div>
+  </div>
+</div>
+
+<script src="game_config.js"></script>
+<script>
+const SHAPES=['ring','ball','twister','cat'];
+const COLORS=['yellow','brown','blue','pink'];
+const TOPPINGS=['plain','white','popping','matcha','purple'];
+
+const CFG=window.GAME_CONFIG||{};
+const GOAL=CFG.GOAL ?? 180;
+const DAY_MS=CFG.DAY_MS ?? 120000;
+const MACHINE_MS=CFG.MACHINE_MS ?? 5000;
+const PAYMENT_DELAY_MS=CFG.PAYMENT_DELAY_MS ?? 3000;
+const ORDER_DELAY_MS=CFG.ORDER_DELAY_MS ?? 3000;
+const ARRIVALS=CFG.ARRIVALS ?? [10000,40000,70000,100000];
+const PLAYER_SPEED=CFG.PLAYER_SPEED ?? 0.00058;
+const CUSTOMER_PATIENCE_MIN_MS=CFG.CUSTOMER_PATIENCE_MIN_MS ?? 56000;
+const CUSTOMER_PATIENCE_RANDOM_MS=CFG.CUSTOMER_PATIENCE_RANDOM_MS ?? 18000;
+const MAX_CUSTOMERS_VISIBLE=CFG.MAX_CUSTOMERS_VISIBLE ?? 4;
+
+const REWARD_HALF_THRESHOLD=CFG.REWARD_HALF_THRESHOLD ?? 0.50;
+const REWARD_QUARTER_THRESHOLD=CFG.REWARD_QUARTER_THRESHOLD ?? 0.25;
+
+const PLAIN_REWARD_EARLY=CFG.PLAIN_REWARD_EARLY ?? 50;
+const PLAIN_REWARD_MID=CFG.PLAIN_REWARD_MID ?? 40;
+const PLAIN_REWARD_LATE=CFG.PLAIN_REWARD_LATE ?? 30;
+
+const TOPPED_REWARD_EARLY=CFG.TOPPED_REWARD_EARLY ?? 70;
+const TOPPED_REWARD_MID=CFG.TOPPED_REWARD_MID ?? 60;
+const TOPPED_REWARD_LATE=CFG.TOPPED_REWARD_LATE ?? 50;
+
+const customersEl=document.getElementById('customers');
+const game=document.getElementById('game');
+const workArea=document.getElementById('workArea');
+const playerEl=document.getElementById('player');
+const playerSprite=document.getElementById('playerSprite');
+const carryEl=document.getElementById('carry');
+const stockEl=document.getElementById('stock');
+const stockItem=document.getElementById('stockItem');
+const trashEl=document.getElementById('trash');
+const targetEl=document.getElementById('target');
+const denyMark=document.getElementById('denyMark');
+const clockEl=document.getElementById('clock');
+const moneyEl=document.getElementById('money');
+const goalCurrent=document.getElementById('goalCurrent');
+const goalTarget=document.getElementById('goalTarget');
+const goalFill=document.getElementById('goalFill');
+const timeFill=document.getElementById('timeFill');
+const startEl=document.getElementById('start');
+const resultEl=document.getElementById('result');
+const resultPanel=document.getElementById('resultPanel');
+
+const bgm=document.getElementById('bgm');
+const volumeSlider=document.getElementById('volumeSlider');
+const muteBtn=document.getElementById('muteBtn');
+
+const DEFAULT_BGM_VOLUME=
+  Number.isFinite(Number(CFG.BGM_VOLUME))
+    ? Math.max(0,Math.min(1,Number(CFG.BGM_VOLUME)))
+    : 0.18;
+
+bgm.volume=DEFAULT_BGM_VOLUME;
+volumeSlider.value=Math.round(DEFAULT_BGM_VOLUME*100);
+
+let bgmMuted=false;
+
+function syncMuteIcon(){
+  muteBtn.textContent=(bgmMuted||bgm.volume===0)?'🔇':'🔊';
+}
+
+function setBGMVolume(value){
+  const v=Math.max(0,Math.min(1,value));
+  bgm.volume=v;
+  if(v>0&&bgmMuted){
+    bgmMuted=false;
+    bgm.muted=false;
+  }
+  syncMuteIcon();
+}
+
+function restartBGM(){
+  bgm.pause();
+  try{bgm.currentTime=0}catch(_){}
+  bgm.loop=true;
+  const p=bgm.play();
+  if(p&&typeof p.catch==='function'){
+    p.catch(()=>{});
+  }
+}
+
+function stopBGM(resetPosition=true){
+  bgm.pause();
+  if(resetPosition){
+    try{bgm.currentTime=0}catch(_){}
+  }
+}
+
+volumeSlider.addEventListener('input',()=>{
+  setBGMVolume(Number(volumeSlider.value)/100);
+});
+
+muteBtn.addEventListener('click',()=>{
+  bgmMuted=!bgmMuted;
+  bgm.muted=bgmMuted;
+  syncMuteIcon();
+});
+
+syncMuteIcon();
+
+const PORTRAITS=[
+  'image/customer/customer_female_01.png',
+  'image/customer/customer_male_01.png'
+];
+
+const PLAYER={
+  idle:'image/player/player_idle.png',
+  front:['image/player/player_walk_front_01.png','image/player/player_walk_front_02.png'],
+  back:['image/player/player_walk_back_01.png','image/player/player_walk_back_02.png'],
+  side:['image/player/player_walk_side_01.png','image/player/player_walk_side_02.png']
+};
+
+const INGREDIENT_IMAGES={
+  white:'image/ingredient/ingredient_white.png',
+  popping:'image/ingredient/ingredient_popping.png',
+  matcha:'image/ingredient/ingredient_matcha.png',
+  purple:'image/ingredient/ingredient_purple.png'
+};
+
+const machines={
+  shape1:{id:'shape1',type:'shape',state:'idle',item:null,startAt:0,endAt:0},
+  color1:{id:'color1',type:'color',state:'idle',item:null,startAt:0,endAt:0},
+  top1:{id:'top1',type:'topping',state:'idle',item:null,startAt:0,endAt:0}
+};
+
+let player={x:.48,y:.57,speed:PLAYER_SPEED,dir:'front',flip:1};
+let carried=null;
+let stocked=null;
+let slots=[];
+let cash=0;
+let lost=0;
+let customerSeq=0;
+let playing=false;
+let dayStart=0;
+let nextArrival=0;
+let currentAction=null;
+let moveTarget=null;
+let lastNow=performance.now();
+
+function donutPath(shape,color){
+  return `image/donut/donut_${shape}_${color}.png`;
+}
+
+function productHTML(item){
+  const badge=item.topping&&item.topping!=='plain'
+    ? `<img class="toppingBadge" src="${INGREDIENT_IMAGES[item.topping]}" alt="">`
+    : '';
+  return `<div class="product"><img class="productBase" src="${donutPath(item.shape,item.color)}" alt="">${badge}</div>`;
+}
+
+/* 16 plain + 48 colored+topping = 64 valid orders, equally likely */
+const ORDER_POOL=[];
+for(const shape of SHAPES){
+  for(const color of COLORS){
+    ORDER_POOL.push({shape,color,topping:'plain'});
+    if(color!=='yellow'){
+      for(const topping of TOPPINGS.filter(t=>t!=='plain')){
+        ORDER_POOL.push({shape,color,topping});
+      }
+    }
+  }
+}
+
+function rnd(a){return a[Math.floor(Math.random()*a.length)]}
+function randomOrder(){return {...rnd(ORDER_POOL)}}
+
+function makeCustomer(){
+  const maxPatience=
+    CUSTOMER_PATIENCE_MIN_MS +
+    Math.random()*CUSTOMER_PATIENCE_RANDOM_MS;
+
+  return {
+    id:++customerSeq,
+    portrait:PORTRAITS[customerSeq%PORTRAITS.length],
+    state:'waitingAsk',
+    order:null,
+    orderReadyAt:0,
+    patience:maxPatience,
+    maxPatience:maxPatience
+  };
+}
+
+function emptySlots(){
+  return Array.from({length:MAX_CUSTOMERS_VISIBLE},()=>({type:'empty'}));
+}
+
+function spawnCustomer(){
+  const i=slots.findIndex(s=>s.type==='empty');
+  if(i<0)return false;
+
+  slots[i]={type:'customer',customer:makeCustomer()};
+  renderCustomers();
+
+  requestAnimationFrame(()=>{
+    const el=customersEl.querySelector(`.customer[data-slot="${i}"]`);
+    if(el)el.classList.add('newFlash');
+  });
+
+  return true;
+}
+
+function customerPct(c){
+  return c.maxPatience
+    ? Math.max(0,Math.min(100,c.patience/c.maxPatience*100))
+    : 100;
+}
+
+function rewardTier(c){
+  const ratio=c.maxPatience ? c.patience/c.maxPatience : 0;
+
+  if(ratio>=REWARD_HALF_THRESHOLD)return 'early';
+  if(ratio>=REWARD_QUARTER_THRESHOLD)return 'mid';
+  return 'late';
+}
+
+function rewardForCustomer(c){
+  const topped=c.order && c.order.topping!=='plain';
+  const tier=rewardTier(c);
+
+  if(topped){
+    if(tier==='early')return TOPPED_REWARD_EARLY;
+    if(tier==='mid')return TOPPED_REWARD_MID;
+    return TOPPED_REWARD_LATE;
+  }
+
+  if(tier==='early')return PLAIN_REWARD_EARLY;
+  if(tier==='mid')return PLAIN_REWARD_MID;
+  return PLAIN_REWARD_LATE;
+}
+
+function patienceColor(pct){
+  if(pct>65)return '#72cb82';
+  if(pct>35)return '#e1c34d';
+  if(pct>15)return '#ec985e';
+  return '#e96565';
+}
+
+function renderCustomers(){
+  customersEl.innerHTML=slots.map((s,i)=>{
+    if(s.type==='empty'){
+      return `<div class="emptyCard"><div class="emptyCircle"></div></div>`;
+    }
+
+    if(s.type==='money'){
+      return `<div class="moneyCard" data-slot="${i}">
+        <img src="image/ui/coin.png" alt="">
+        <strong>¥${s.amount}</strong>
+      </div>`;
+    }
+
+    if(s.type==='paymentPending'){
+      return `<div class="pendingCard">
+        <img src="image/ui/stock_tray.png" alt="">
+        <div class="waitDots"><i></i><i></i><i></i></div>
+      </div>`;
+    }
+
+    const c=s.customer;
+    let body='';
+
+    if(c.state==='waitingAsk'){
+      body=`<div class="askBubble">
+        <div class="askMark">?</div>
+        <img class="askHint" src="image/ui/click_hand.png" alt="">
+      </div>`;
+    }else if(c.state==='thinking'){
+      body=`<div class="thinkingBubble">
+        <div class="thinkingDots"><i></i><i></i><i></i></div>
+      </div>`;
+    }else{
+      body=`<div class="orderBubble">${productHTML(c.order)}</div>`;
+    }
+
+    const pct=customerPct(c);
+    const meter=`<div class="patienceWrap">
+      <div class="patienceFill" style="width:${pct}%;background:${patienceColor(pct)}"></div>
+    </div>`;
+
+    return `<div class="customer" data-slot="${i}" data-customer="${c.id}" data-state="${c.state}">
+      <img class="customerPortrait" src="${c.portrait}" alt="">
+      <div class="customerContent">${body}</div>
+      ${meter}
+    </div>`;
+  }).join('');
+}
+
+function updateCustomerVisuals(){
+  slots.forEach((s,i)=>{
+    if(s.type!=='customer')return;
+
+    const fill=customersEl.querySelector(
+      `.customer[data-slot="${i}"] .patienceFill`
+    );
+    if(!fill)return;
+
+    const pct=customerPct(s.customer);
+    fill.style.width=pct+'%';
+    fill.style.background=patienceColor(pct);
+  });
+}
+
+function flashWrong(i){
+  const el=customersEl.querySelector(`.customer[data-slot="${i}"]`);
+  if(!el)return;
+  el.classList.remove('wrongFlash');
+  void el.offsetWidth;
+  el.classList.add('wrongFlash');
+  showDenyAtElement(el);
+}
+
+function flashOrderReady(i){
+  const el=customersEl.querySelector(`.customer[data-slot="${i}"]`);
+  if(!el)return;
+  el.classList.remove('orderReadyFlash');
+  void el.offsetWidth;
+  el.classList.add('orderReadyFlash');
+}
+
+function initButtons(){
+  document.getElementById('shapeOptions').innerHTML=SHAPES.map(s=>
+    `<button class="optionBtn" data-machine="shape1" data-option="${s}">
+      <img class="shapeBtnImg" src="${donutPath(s,'yellow')}" alt="">
+    </button>`
+  ).join('');
+
+  document.getElementById('colorOptions').innerHTML=['brown','blue','pink'].map(c=>
+    `<button class="optionBtn" data-machine="color1" data-option="${c}">
+      <span class="colorSwatch ${c}"></span>
+    </button>`
+  ).join('');
+
+  document.getElementById('topOptions').innerHTML=['white','popping','matcha','purple'].map(t=>
+    `<button class="optionBtn" data-machine="top1" data-option="${t}">
+      <img class="ingredientIcon" src="${INGREDIENT_IMAGES[t]}" alt="">
+    </button>`
+  ).join('');
+}
+initButtons();
+
+function machineEl(id){
+  return document.querySelector(`[data-machine="${id}"]`);
+}
+
+function updateMachine(m,now=performance.now()){
+  const el=machineEl(m.id);
+  const fill=el.querySelector('.machineProgressFill');
+  const out=el.querySelector('.outputPad');
+
+  el.classList.toggle('processing',m.state==='processing');
+  el.classList.toggle('ready',m.state==='ready');
+  el.classList.toggle(
+    'selected',
+    !!(currentAction&&currentAction.machineId===m.id)
+  );
+
+  let pct=0;
+  if(m.state==='processing'){
+    pct=Math.max(
+      0,
+      Math.min(100,(now-m.startAt)/(m.endAt-m.startAt)*100)
+    );
+  }else if(m.state==='ready'){
+    pct=100;
+  }
+
+  fill.style.width=pct+'%';
+  out.innerHTML=m.state==='ready'?productHTML(m.item):'';
+
+  el.querySelectorAll('.optionBtn').forEach(
+    b=>b.disabled=!playing||m.state!=='idle'
+  );
+}
+
+function renderCarry(){
+  if(!carried){
+    carryEl.style.display='none';
+    carryEl.innerHTML='';
+    return;
+  }
+  carryEl.style.display='flex';
+  carryEl.innerHTML=productHTML(carried);
+}
+
+function renderStock(){
+  stockItem.innerHTML=stocked?productHTML(stocked):'';
+}
+
+function showDenyAtElement(el){
+  if(!el)return;
+  const gr=game.getBoundingClientRect();
+  const r=el.getBoundingClientRect();
+
+  denyMark.style.left=(r.left-gr.left+r.width/2-21)+'px';
+  denyMark.style.top=(r.top-gr.top+r.height/2-21)+'px';
+
+  denyMark.classList.remove('show');
+  void denyMark.offsetWidth;
+  denyMark.classList.add('show');
+
+  clearTimeout(denyMark._t);
+  denyMark._t=setTimeout(()=>denyMark.classList.remove('show'),450);
+}
+
+function customerPoint(i){
+  const gr=game.getBoundingClientRect();
+  const el=customersEl.children[i];
+  const r=el?.getBoundingClientRect();
+
+  return r
+    ? {x:335,y:r.top-gr.top+r.height/2}
+    : {x:335,y:gr.height*.4};
+}
+
+function machinePoint(id){
+  const gr=game.getBoundingClientRect();
+  const r=machineEl(id).getBoundingClientRect();
+
+  if(id==='top1'){
+    return {
+      x:r.left-gr.left-18,
+      y:r.top-gr.top+r.height*.48
+    };
+  }
+
+  return {
+    x:r.left-gr.left+r.width*.5,
+    y:r.top-gr.top+r.height*.78
+  };
+}
+
+function objectPoint(el,side){
+  const gr=game.getBoundingClientRect();
+  const r=el.getBoundingClientRect();
+
+  return {
+    x:r.left-gr.left+r.width/2+(side==='right'?r.width*.72:-r.width*.72),
+    y:r.top-gr.top+r.height/2
+  };
+}
+
+function clearSelected(){
+  document.querySelectorAll('.selected').forEach(e=>e.classList.remove('selected'));
+}
+
+function setAction(a,p,el){
+  if(!playing)return;
+
+  currentAction=a;
+  clearSelected();
+  if(el)el.classList.add('selected');
+
+  const gr=game.getBoundingClientRect();
+  const x=Math.max(340,Math.min(gr.width-28,p.x));
+  const y=Math.max(28,Math.min(gr.height-28,p.y));
+
+  moveTarget={x:x/gr.width,y:y/gr.height};
+
+  targetEl.style.left=x+'px';
+  targetEl.style.top=y+'px';
+  targetEl.style.display='block';
+}
+
+function cancelAction(){
+  currentAction=null;
+  moveTarget=null;
+  targetEl.style.display='none';
+  clearSelected();
+  Object.values(machines).forEach(m=>updateMachine(m));
+}
+
+function startMachine(m){
+  m.state='processing';
+  m.startAt=performance.now();
+  m.endAt=m.startAt+MACHINE_MS;
+  updateMachine(m);
+}
+
+function execute(){
+  const a=currentAction;
+  if(!a)return;
+
+  if(a.kind==='askOrder'){
+    const s=slots[a.slotIndex];
+
+    if(
+      s?.type==='customer' &&
+      s.customer.id===a.customerId &&
+      s.customer.state==='waitingAsk'
+    ){
+      const c=s.customer;
+      c.state='thinking';
+      c.order=randomOrder();
+      c.orderReadyAt=performance.now()+ORDER_DELAY_MS;
+      renderCustomers();
+    }
+  }
+
+  if(a.kind==='machineUse'){
+    const m=machines[a.machineId];
+
+    if(m.state==='idle'){
+      if(m.type==='shape'){
+        if(!carried){
+          m.item={
+            shape:a.optionId,
+            color:'yellow',
+            topping:'plain',
+            stage:'colored'
+          };
+          startMachine(m);
+        }else{
+          showDenyAtElement(machineEl(m.id));
+        }
+      }else if(m.type==='color'){
+        if(carried&&carried.stage==='colored'){
+          m.item={
+            ...carried,
+            color:a.optionId,
+            topping:'plain',
+            stage:'colored'
+          };
+          carried=null;
+          renderCarry();
+          startMachine(m);
+        }else{
+          showDenyAtElement(machineEl(m.id));
+        }
+      }else{
+        if(carried&&carried.stage==='colored'){
+          m.item={
+            ...carried,
+            topping:a.optionId,
+            stage:'done'
+          };
+          carried=null;
+          renderCarry();
+          startMachine(m);
+        }else{
+          showDenyAtElement(machineEl(m.id));
+        }
+      }
+    }
+  }
+
+  if(a.kind==='pickup'){
+    const m=machines[a.machineId];
+
+    if(m.state==='ready'&&!carried){
+      carried=m.item;
+      m.item=null;
+      m.state='idle';
+      renderCarry();
+      updateMachine(m);
+    }else if(carried){
+      showDenyAtElement(machineEl(m.id));
+    }
+  }
+
+  if(a.kind==='deliver'){
+    const s=slots[a.slotIndex];
+
+    if(
+      s?.type==='customer' &&
+      s.customer.id===a.customerId &&
+      s.customer.state==='ordered'
+    ){
+      if(!carried){
+        showDenyAtElement(
+          customersEl.querySelector(`.customer[data-slot="${a.slotIndex}"]`)
+        );
+      }else{
+        const o=s.customer.order;
+
+        const plain=
+          o.topping==='plain' &&
+          carried.stage==='colored' &&
+          carried.shape===o.shape &&
+          carried.color===o.color;
+
+        const topped=
+          o.topping!=='plain' &&
+          carried.stage==='done' &&
+          carried.shape===o.shape &&
+          carried.color===o.color &&
+          carried.topping===o.topping;
+
+        if(plain||topped){
+          const reward=rewardForCustomer(s.customer);
+
+          carried=null;
+          renderCarry();
+
+          slots[a.slotIndex]={
+            type:'paymentPending',
+            readyAt:performance.now()+PAYMENT_DELAY_MS,
+            amount:reward
+          };
+          renderCustomers();
+        }else{
+          flashWrong(a.slotIndex);
+        }
+      }
+    }
+  }
+
+  if(a.kind==='money'){
+    if(slots[a.slotIndex]?.type==='money'){
+      cash+=slots[a.slotIndex].amount;
+      slots[a.slotIndex]={type:'empty'};
+      renderCustomers();
+      updateHUD();
+    }
+  }
+
+  if(a.kind==='stock'){
+    if(carried&&!stocked){
+      stocked=carried;
+      carried=null;
+    }else if(!carried&&stocked){
+      carried=stocked;
+      stocked=null;
+    }else if(carried&&stocked){
+      showDenyAtElement(stockEl);
+    }
+
+    renderCarry();
+    renderStock();
+  }
+
+  if(a.kind==='trash'&&carried){
+    carried=null;
+    renderCarry();
+  }
+
+  cancelAction();
+}
+
+function updateMovement(dt,now){
+  if(!currentAction||!moveTarget||!playing){
+    updatePlayerSprite(now,false);
+    return;
+  }
+
+  const dx=moveTarget.x-player.x;
+  const dy=moveTarget.y-player.y;
+  const d=Math.hypot(dx,dy);
+
+  if(d<.0045){
+    player.x=moveTarget.x;
+    player.y=moveTarget.y;
+    execute();
+    updatePlayerSprite(now,false);
+    return;
+  }
+
+  const step=player.speed*dt;
+  const ratio=Math.min(1,step/d);
+
+  player.x+=dx*ratio;
+  player.y+=dy*ratio;
+
+  if(Math.abs(dx)>Math.abs(dy)){
+    player.dir='side';
+    player.flip=dx<0?-1:1;
+  }else{
+    player.dir=dy<0?'back':'front';
+    player.flip=1;
+  }
+
+  updatePlayerSprite(now,true);
+}
+
+function updatePlayerSprite(now,moving){
+  const i=Math.floor(now/220)%2;
+  let src=PLAYER.idle;
+
+  if(moving){
+    if(player.dir==='side')src=PLAYER.side[i];
+    else if(player.dir==='back')src=PLAYER.back[i];
+    else src=PLAYER.front[i];
+  }else if(player.dir==='back'){
+    src=PLAYER.back[0];
+  }
+
+  playerSprite.src=src;
+  playerSprite.style.transform=
+    `translateX(-50%) scaleX(${player.flip})`;
+}
+
+function renderPlayer(){
+  playerEl.style.left=(player.x*100)+'%';
+  playerEl.style.top=(player.y*100)+'%';
+}
+
+function updateMachines(now){
+  Object.values(machines).forEach(m=>{
+    if(m.state==='processing'&&now>=m.endAt){
+      m.state='ready';
+    }
+    updateMachine(m,now);
+  });
+}
+
+function updatePayments(now){
+  let changed=false;
+
+  slots.forEach((s,i)=>{
+    if(s.type==='paymentPending'&&now>=s.readyAt){
+      slots[i]={type:'money',amount:s.amount};
+      changed=true;
+    }
+  });
+
+  if(changed)renderCustomers();
+}
+
+function updateOrderStates(now){
+  const ready=[];
+
+  slots.forEach((s,i)=>{
+    if(s.type!=='customer')return;
+
+    const c=s.customer;
+
+    if(c.state==='thinking'&&now>=c.orderReadyAt){
+      c.state='ordered';
+      ready.push(i);
+    }
+  });
+
+  if(ready.length){
+    renderCustomers();
+    ready.forEach(i=>flashOrderReady(i));
+  }
+}
+
+function updateCustomers(dt){
+  let changed=false;
+
+  slots.forEach((s,i)=>{
+    if(s.type!=='customer')return;
+
+    s.customer.patience-=dt;
+
+    if(s.customer.patience<=0){
+      if(
+        currentAction?.kind==='deliver' &&
+        currentAction.customerId===s.customer.id
+      ){
+        cancelAction();
+      }
+
+      slots[i]={type:'empty'};
+      lost++;
+      changed=true;
+    }
+  });
+
+  if(changed)renderCustomers();
+  else updateCustomerVisuals();
+}
+
+function updateArrivals(now){
+  if(
+    nextArrival<ARRIVALS.length &&
+    now-dayStart>=ARRIVALS[nextArrival] &&
+    spawnCustomer()
+  ){
+    nextArrival++;
+  }
+}
+
+function updateHUD(now=performance.now()){
+  moneyEl.textContent=cash;
+  goalCurrent.textContent=cash;
+  goalTarget.textContent=GOAL;
+  goalFill.style.width=Math.min(100,cash/GOAL*100)+'%';
+
+  const ratio=playing
+    ? Math.min(1,(now-dayStart)/DAY_MS)
+    : 0;
+
+  const md=Math.floor(ratio*540);
+  const h=10+Math.floor(md/60);
+  const m=md%60;
+
+  clockEl.textContent=
+    `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+
+  timeFill.style.width=ratio*100+'%';
+}
+
+function endDay(){
+  if(!playing)return;
+
+  playing=false;
+  stopBGM(false);
+  cancelAction();
+  updateHUD(dayStart+DAY_MS);
+
+  const clear=cash>=GOAL;
+
+  resultPanel.innerHTML=`
+    <div class="resultMark">${clear?'🎉':'🌙'}</div>
+    <h2>営業終了！</h2>
+    <h2 class="${clear?'resultSuccess':'resultFail'}">
+      ${clear?'ノルマ達成！':'ノルマ未達成'}
+    </h2>
+    <p>
+      売上 <strong>¥${cash}</strong> / ¥${GOAL}<br>
+      退店 ${lost}人
+    </p>
+    <button class="bigBtn" id="retry">もう一度営業</button>
+    <button class="bigBtn secondary" id="backTitle">開店前に戻る</button>
+  `;
+
+  resultEl.style.display='flex';
+
+  document.getElementById('retry').onclick=startGame;
+  document.getElementById('backTitle').onclick=resetToTitle;
+}
+
+function resetCore(){
+  cash=0;
+  lost=0;
+  customerSeq=0;
+  carried=null;
+  stocked=null;
+  slots=emptySlots();
+  nextArrival=0;
+  player={
+    x:.48,
+    y:.57,
+    speed:PLAYER_SPEED,
+    dir:'front',
+    flip:1
+  };
+
+  currentAction=null;
+  moveTarget=null;
+  targetEl.style.display='none';
+  clearSelected();
+
+  Object.values(machines).forEach(m=>{
+    m.state='idle';
+    m.item=null;
+    m.startAt=0;
+    m.endAt=0;
+    updateMachine(m);
+  });
+
+  renderCustomers();
+  renderCarry();
+  renderStock();
+  renderPlayer();
+}
+
+function resetToTitle(){
+  playing=false;
+  stopBGM(true);
+  resetCore();
+  resultEl.style.display='none';
+  startEl.style.display='flex';
+  updateHUD();
+}
+
+function startGame(){
+  resetCore();
+  playing=true;
+  dayStart=performance.now();
+  startEl.style.display='none';
+  resultEl.style.display='none';
+  spawnCustomer();
+  updateHUD(dayStart);
+
+  // 営業を始めるたびにBGMを先頭から再生。
+  restartBGM();
+}
+
+game.addEventListener('click',e=>{
+  if(!playing)return;
+
+  const btn=e.target.closest('.optionBtn');
+
+  if(btn){
+    e.stopPropagation();
+    const id=btn.dataset.machine;
+
+    if(machines[id].state==='idle'){
+      setAction(
+        {
+          kind:'machineUse',
+          machineId:id,
+          optionId:btn.dataset.option
+        },
+        machinePoint(id),
+        machineEl(id)
+      );
+    }
+    return;
+  }
+
+  const out=e.target.closest('.outputPad');
+
+  if(out){
+    e.stopPropagation();
+    const id=out.dataset.output;
+
+    if(machines[id].state==='ready'){
+      setAction(
+        {kind:'pickup',machineId:id},
+        machinePoint(id),
+        machineEl(id)
+      );
+    }
+    return;
+  }
+
+  const customer=e.target.closest('.customer');
+
+  if(customer){
+    e.stopPropagation();
+
+    const i=+customer.dataset.slot;
+    const s=slots[i];
+
+    if(s?.type!=='customer')return;
+
+    const c=s.customer;
+
+    if(c.state==='waitingAsk'){
+      setAction(
+        {
+          kind:'askOrder',
+          slotIndex:i,
+          customerId:c.id
+        },
+        customerPoint(i),
+        customer
+      );
+    }else if(c.state==='thinking'){
+      showDenyAtElement(customer);
+    }else if(c.state==='ordered'){
+      if(carried){
+        setAction(
+          {
+            kind:'deliver',
+            slotIndex:i,
+            customerId:c.id
+          },
+          customerPoint(i),
+          customer
+        );
+      }else{
+        showDenyAtElement(customer);
+      }
+    }
+
+    return;
+  }
+
+  const money=e.target.closest('.moneyCard');
+
+  if(money){
+    e.stopPropagation();
+    const i=+money.dataset.slot;
+
+    setAction(
+      {kind:'money',slotIndex:i},
+      customerPoint(i),
+      money
+    );
+    return;
+  }
+
+  if(e.target.closest('#stock')){
+    e.stopPropagation();
+    setAction(
+      {kind:'stock'},
+      objectPoint(stockEl,'right'),
+      stockEl
+    );
+    return;
+  }
+
+  if(e.target.closest('#trash')){
+    e.stopPropagation();
+    setAction(
+      {kind:'trash'},
+      objectPoint(trashEl,'left'),
+      trashEl
+    );
+    return;
+  }
+
+  const station=e.target.closest('.station');
+
+  if(station){
+    e.stopPropagation();
+    const id=station.dataset.machine;
+
+    if(machines[id].state==='ready'){
+      setAction(
+        {kind:'pickup',machineId:id},
+        machinePoint(id),
+        station
+      );
+    }
+  }
+});
+
+document.getElementById('startBtn').onclick=startGame;
+document.getElementById('resetBtn').onclick=()=>{
+  if(playing)startGame();
+  else resetToTitle();
+};
+
+function frame(now){
+  const dt=Math.min(34,now-lastNow);
+  lastNow=now;
+
+  if(playing){
+    updateMovement(dt,now);
+    updateMachines(now);
+    updatePayments(now);
+    updateOrderStates(now);
+    updateArrivals(now);
+    updateCustomers(dt);
+    updateHUD(now);
+
+    if(now-dayStart>=DAY_MS){
+      endDay();
+    }
+  }
+
+  renderPlayer();
+  requestAnimationFrame(frame);
+}
+
+resetToTitle();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
